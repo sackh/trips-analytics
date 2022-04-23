@@ -1,0 +1,12 @@
+# linting tools
+black
+flake8
+isort
+
+# unit tests
+pytest
+pytest-cov
+pytest-mypy
+
+# Download trips data
+gdown
