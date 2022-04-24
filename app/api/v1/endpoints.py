@@ -2,10 +2,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict
 
+import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.v1.dependencies import get_s2_id
+from app.api.v1.dependencies import convert_miles_to_km, convert_seconds_to_hours, get_s2_id
 
 router = APIRouter()
 
@@ -65,5 +66,26 @@ async def average_fare_heatmap(
     df = df.round(2)
     trips_dict = df.to_dict("split")
     return {
-        "data": [{"s2id": k, "fare": v[0]} for k, v in zip(trips_dict["index"], trips_dict["data"])]
+        "data": [
+            {"s2id": k, "fare": v[0]} for k, v in zip(trips_dict["index"], trips_dict["data"])
+        ]
     }
+
+
+@router.get("/average_speed_24hrs")
+def average_speed_24hrs(date: str, trips_df: pd.DataFrame = Depends(read_trips_data)) -> Dict:
+    """Average speed of trips that ended in the past 24 hours from the provided date."""
+    try:
+        inp_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=f"Invalid start or end date, Error: {err}")
+    trips_df["end_date"] = trips_df["trip_end_timestamp"].dt.date
+    df = trips_df[trips_df.end_date == inp_date]
+    df = df[(df["trip_miles"].notna()) & (df["trip_seconds"].notna())]
+    df["trip_time_hours"] = df["trip_seconds"].apply(lambda x: convert_seconds_to_hours(x))
+    df["trip_distance_km"] = df["trip_miles"].apply(lambda x: convert_miles_to_km(x))
+    df["trip_speed"] = df.trip_distance_km / df.trip_time_hours
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df.dropna(inplace=True)
+    avg_speed = round(df["trip_speed"].mean(), 2)
+    return {"data": [{"average_speed": avg_speed}]}
