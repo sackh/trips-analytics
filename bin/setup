@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo "Starting setup script"
+
+docker build -t trips-analytics .
+
+echo "setup completed"

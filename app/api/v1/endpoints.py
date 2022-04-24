@@ -26,8 +26,8 @@ async def read_trips_data() -> pd.DataFrame:
 async def total_trips(
     start: str, end: str, trips_df: pd.DataFrame = Depends(read_trips_data)
 ) -> Dict:
-    """Retrun total number of trips per day between `start` and `end`, based on the pickup
-    time of the trip.
+    """Retrun total number of trips per day between `start` and `end`, dates both inclusive based
+    on the pickup time of the trip. Dates should be in `YYYY-MM-DD` format.
     """
     try:
         sdate = datetime.strptime(start, "%Y-%m-%d").date()

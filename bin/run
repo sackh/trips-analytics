@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ -n "$1" ]; then
+  port_num=$1
+else
+  port_num=8080
+fi
+echo "Starting run script with input port $port_num"
+
+docker run -e "PORT_NUM=$port_num" -p $port_num:$port_num trips-analytics
